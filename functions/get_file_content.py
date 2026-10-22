@@ -1,5 +1,23 @@
 import os
 
+schema_get_file_content = {
+    "type": "function",
+    "function": {
+        "name": "get_file_content",
+        "description": "Prints the contents of a file with a given relative file path to the working directory",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "File path to print the contents, relative to the working directory (including the file extension .py)",
+                },
+            },
+            "required": ["file_path"],
+        },
+    },
+}
+
 def get_file_content(working_directory: str, file_path: str) -> str:
     try:
         work_dir_path = os.path.abspath(working_directory)
