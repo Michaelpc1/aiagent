@@ -6,4 +6,6 @@ When a user asks a question or makes a request, make a function call plan. You c
 - List files and directories
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
+
+Always use the exact parameter names defined in each function's schema. Do not rename or substitute them.
 """
