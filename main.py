@@ -1,6 +1,7 @@
 import os
 import argparse
 import json
+import sys
 from call_function import available_functions, call_function
 from prompts import system_prompt
 from dotenv import load_dotenv
@@ -31,6 +32,29 @@ def main():
         {"role": "user", "content": args.user_prompt},
     ]
 
+    if args.verbose:
+        print(f"User prompt: {args.user_prompt}")
+
+    for _ in range(20):
+        try:
+            result = generate_content(client, messages, args.verbose)
+
+            if result:
+                print("Final response: ")
+                print(result)
+                return
+        except Exception as e:
+            print(f"Error in generate_content: {e}")
+
+
+    print("Error: Maximum iterations reached")
+    sys.exit(1)
+
+
+
+
+
+def generate_content(client: OpenAI, messages: list, verbose: bool) -> None | str:
     response = client.chat.completions.create(
         model="openrouter/free",
         messages=messages,
@@ -40,25 +64,28 @@ def main():
     if response.usage is None:
         raise RuntimeError("response.usage is None")
 
-    if args.verbose:
-        print(f"User prompt: {args.user_prompt}")
+    if verbose:
         print(f"Prompt tokens: {response.usage.prompt_tokens}")
         print(f"Response tokens: {response.usage.completion_tokens}")
 
     message = response.choices[0].message
-    if message.tool_calls != None:
-        for tool_call in message.tool_calls:
-            function_args = json.loads(tool_call.function.arguments or "{}")
-            result_message = call_function(tool_call, args.verbose)
-            if result_message["content"] == "":
-                raise Exception("content is empty")
+    messages.append(message)
+    if not message.tool_calls:
+        print("Response:")
+        print(message.content)
+        return message.content
 
-            if args.verbose:
-                print(f"-> {result_message['content']}")
-            else:
-                print(result_message)
+    for tool_call in message.tool_calls:
+        if tool_call.type != "function":
+            continue
 
-    print(message.content)
+        result_message = call_function(tool_call, verbose)
+        messages.append(result_message)
+        if result_message["content"] == "":
+            raise Exception("content is empty")
+
+        if verbose:
+            print(f"-> {result_message['content']}")
 
 
 if __name__ == "__main__":
